@@ -7,7 +7,7 @@ Archive old Instapaper articles.
 # Usage
 
 ```
-docker run --rm -e VAR_1 VAL_1 -e VAR_2 VAL_2 (...) botanicus/instapaper-article-expirer
+docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) botanicus/instapaper-article-expirer
 ```
 
 Replace `VAR_x`/`VAL_x` with variables from the configuration section.
