@@ -7,9 +7,9 @@ require 'pushover'
 CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
 
 # Helpers.
-def delete_bookmark(bookmark)
+def delete_bookmark(client, bookmark)
   if client.delete_bookmark(bookmark.bookmark_id)
-    STDERR.puts "~ DELETE #{bookmark.title} – #{bookmarks.url}"
+    STDERR.puts "~ DELETE #{bookmark.title} – #{bookmark.url}"
   end
 end
 
@@ -51,5 +51,5 @@ old_bookmarks = bookmarks.filter do |bookmark|
 end
 
 old_bookmarks.each do |bookmark|
-  delete_bookmark(bookmark) if notify_about_deletion(bookmark)
+  delete_bookmark(client, bookmark) if notify_about_deletion(bookmark)
 end
