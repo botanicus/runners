@@ -12,7 +12,6 @@ docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) botanicus/instapaper-article
 
 Replace `VAR_x`/`VAL_x` with variables from the configuration section.
 
-
 # Configuration
 
 - `INSTAPAPER_OAUTH_CONSUMER_ID` and `INSTAPAPER_OAUTH_CONSUMER_SECRET`. Your OAuth credentials. You need to get these [from Instapaper](https://www.instapaper.com/main/request_oauth_consumer_token).
