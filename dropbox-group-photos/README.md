@@ -15,5 +15,5 @@ Replace `VAR_x`/`VAL_x` with variables from the configuration section.
 # Configuration
 
 - `DROPBOX_ACCESS_TOKEN`
-- `KEEP_DAYS` how many days do you want the photos to be kept in `Camera Uploads` before archiving. Defaults to `45`.
+- `DAYS_TO_KEEP` how many days do you want the photos to be kept in `Camera Uploads` before archiving. Defaults to `45`.
 - `PARENT_FOLDER` where do you want to archive the photos. Defaults to `Pictures`.
