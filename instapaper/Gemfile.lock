@@ -32,6 +32,8 @@ GEM
       multi_json (~> 1)
       simple_oauth (~> 0.3)
       virtus (~> 1)
+    logglier (0.5.0)
+      multi_json (~> 1)
     multi_json (1.13.1)
     oj (3.7.11)
     public_suffix (3.0.3)
@@ -55,4 +57,5 @@ PLATFORMS
 
 DEPENDENCIES
   instapaper
+  logglier
   pushover
