@@ -1,6 +1,7 @@
 require 'ostruct'
 
 OpenStruct.new(
+  loggly_url: ENV.fetch('LOGGLY_URL'),
   instapaper_client_key: ENV.fetch('INSTAPAPER_OAUTH_CONSUMER_ID'),
   instapaper_client_secret: ENV.fetch('INSTAPAPER_OAUTH_CONSUMER_SECRET'),
   instapaper_username: ENV.fetch('INSTAPAPER_USERNAME'),

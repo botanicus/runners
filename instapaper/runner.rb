@@ -2,13 +2,15 @@
 
 require 'instapaper'
 require 'pushover'
+require 'logglier'
 
 CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
+LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
 
 # Helpers.
 def delete_bookmark(client, bookmark)
   if client.delete_bookmark(bookmark.bookmark_id)
-    STDERR.puts "~ DELETE #{bookmark.title} – #{bookmark.url}"
+    logger.info "~ DELETE #{bookmark.title} – #{bookmark.url}"
   end
 end
 
@@ -39,7 +41,7 @@ end
 bookmarks = client.bookmarks(limit: 500).bookmarks
 
 if bookmarks.length > 499
-  STDERR.puts "~ Warning: only first 500 bookmarks are being inspected."
+  logger.info("~ Warning: only first 500 bookmarks are being inspected.")
 end
 
 old_bookmarks = bookmarks.filter do |bookmark|
