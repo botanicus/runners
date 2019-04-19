@@ -14,6 +14,7 @@ Replace `VAR_x`/`VAL_x` with variables from the configuration section.
 
 # Configuration
 
+- `LOGGLY_URL` where the logs should be sent to.
 - `INSTAPAPER_OAUTH_CONSUMER_ID` and `INSTAPAPER_OAUTH_CONSUMER_SECRET`. Your OAuth credentials. You need to get these [from Instapaper](https://www.instapaper.com/main/request_oauth_consumer_token).
 - `INSTAPAPER_USERNAME` and `INSTAPAPER_PASSWORD`.
 - `INSTAPAPER_DAYS_TO_KEEP` how many days to keep. Defaults to `90` days.
