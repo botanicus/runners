@@ -43,7 +43,6 @@ end
 
 # Main.
 bookmarks = client.bookmarks(limit: 500).bookmarks
-LOGGER.info("#{bookmarks.length} found")
 
 if bookmarks.length > 499
   LOGGER.info("~ Warning: only first 500 bookmarks are being inspected.")
@@ -56,7 +55,7 @@ old_bookmarks = bookmarks.filter do |bookmark|
   timestamp < (Date.today - CONFIG.days_to_keep)
 end
 
-LOGGER.info("#{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
+LOGGER.info("Out of #{bookmarks.length} bookmarks, #{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
 
 old_bookmarks.each do |bookmark|
   delete_bookmark(client, bookmark) if notify_about_deletion(bookmark)
