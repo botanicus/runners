@@ -56,7 +56,10 @@ old_bookmarks = bookmarks.filter do |bookmark|
 end
 
 LOGGER.info("Out of #{bookmarks.length} bookmarks, #{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
+if old_bookmarks.length > CONFIG.max_bookmarks_at_once
+  LOGGER.warn("Maximum number of bookmarks to be processed at once is #{CONFIG.max_bookmarks_at_once}. Keeping the rest #{old_bookmarks.length - CONFIG.max_bookmarks_at_once} for later.")
+end
 
-old_bookmarks.each do |bookmark|
+old_bookmarks[0...CONFIG.max_bookmarks_at_once].each do |bookmark|
   delete_bookmark(client, bookmark) if notify_about_deletion(bookmark)
 end
