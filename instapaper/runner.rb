@@ -24,20 +24,30 @@ def delete_bookmark(client, bookmark)
   end
 end
 
-def notify_about_deletion(bookmark)
-  message = Pushover::Message.create(
+def notify(**options)
+  clean_options = options.reduce(Hash.new) do |buffer, (key, value)|
+    buffer.merge!(key => value) if value
+    buffer
+  end
+
+  message = Pushover::Message.create(clean_options.merge(
     token: CONFIG.pushover_app_token,
     user: CONFIG.pushover_user_key,
-    title: "Instapaper article expired",
-    message: bookmark.title,
-    url: bookmark.url
-  )
+  ))
 
   info("PushOver message: #{message.inspect}")
 
   response = message.push
   info("PushOver message delivery status: #{response.status == 1}")
   response.status == 1
+end
+
+def notify_about_deletion(bookmark)
+  notify(
+    title: "Instapaper article expired",
+    message: bookmark.title,
+    url: bookmark.url
+  )
 end
 
 # Auth.
@@ -68,7 +78,12 @@ end
 
 info("Out of #{bookmarks.length} bookmarks, #{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
 if old_bookmarks.length > CONFIG.max_bookmarks_at_once
-  warn("Maximum number of bookmarks to be processed at once is #{CONFIG.max_bookmarks_at_once}. Keeping the rest #{old_bookmarks.length - CONFIG.max_bookmarks_at_once} for later.")
+  message = "Maximum number of bookmarks to be processed at once is #{CONFIG.max_bookmarks_at_once}. Keeping the rest #{old_bookmarks.length - CONFIG.max_bookmarks_at_once} for later."
+  warn(message)
+  notify(
+    title: "There are too many expired articles in your Instapaper",
+    message: message
+  )
 end
 
 old_bookmarks[0...CONFIG.max_bookmarks_at_once].each do |bookmark|
