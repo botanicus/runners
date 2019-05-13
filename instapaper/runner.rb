@@ -66,7 +66,7 @@ info("Running botanicus/instapaper-article-archiver")
 bookmarks = client.bookmarks(limit: 500).bookmarks
 
 if bookmarks.length > 499
-  info("~ Warning: only first 500 bookmarks are being inspected.")
+  warn("Warning: only first 500 bookmarks are being inspected.")
 end
 
 old_bookmarks = bookmarks.filter do |bookmark|
