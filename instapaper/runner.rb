@@ -7,12 +7,20 @@ require 'logglier'
 CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
 LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
 
-LOGGER.info("Running botanicus/instapaper-article-archiver")
-
 # Helpers.
+def info(message)
+  puts "~ #{message}"
+  LOGGER.info(message)
+end
+
+def warn(message)
+  puts "~ #{message}"
+  LOGGER.warn(message)
+end
+
 def delete_bookmark(client, bookmark)
   if client.delete_bookmark(bookmark.bookmark_id)
-    LOGGER.info "~ DELETE #{bookmark.title} – #{bookmark.url}"
+    info("~ DELETE #{bookmark.title} – #{bookmark.url}")
   end
 end
 
@@ -24,10 +32,11 @@ def notify_about_deletion(bookmark)
     message: bookmark.title,
     url: bookmark.url
   )
-  LOGGER.info("PushOver message: #{message.inspect}")
+
+  info("PushOver message: #{message.inspect}")
 
   response = message.push
-  LOGGER.info("PushOver message delivery status: #{response.status == 1}")
+  info("PushOver message delivery status: #{response.status == 1}")
   response.status == 1
 end
 
@@ -42,10 +51,12 @@ client = Instapaper::Client.new do |client|
 end
 
 # Main.
+info("Running botanicus/instapaper-article-archiver")
+
 bookmarks = client.bookmarks(limit: 500).bookmarks
 
 if bookmarks.length > 499
-  LOGGER.info("~ Warning: only first 500 bookmarks are being inspected.")
+  info("~ Warning: only first 500 bookmarks are being inspected.")
 end
 
 old_bookmarks = bookmarks.filter do |bookmark|
@@ -55,9 +66,9 @@ old_bookmarks = bookmarks.filter do |bookmark|
   timestamp < (Date.today - CONFIG.days_to_keep)
 end
 
-LOGGER.info("Out of #{bookmarks.length} bookmarks, #{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
+info("Out of #{bookmarks.length} bookmarks, #{old_bookmarks.length} are older than #{CONFIG.days_to_keep} days")
 if old_bookmarks.length > CONFIG.max_bookmarks_at_once
-  LOGGER.warn("Maximum number of bookmarks to be processed at once is #{CONFIG.max_bookmarks_at_once}. Keeping the rest #{old_bookmarks.length - CONFIG.max_bookmarks_at_once} for later.")
+  warn("Maximum number of bookmarks to be processed at once is #{CONFIG.max_bookmarks_at_once}. Keeping the rest #{old_bookmarks.length - CONFIG.max_bookmarks_at_once} for later.")
 end
 
 old_bookmarks[0...CONFIG.max_bookmarks_at_once].each do |bookmark|
