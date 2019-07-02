@@ -50,11 +50,15 @@ if published_files_request.has_more?
 end
 
 # Download every published post from Dropbox and expose it on REPO_PATH.
+File.write(CONFIG.private_ssh_key, '/root/id_rsa')
+
 REPO_PATH = '/repo'
 POSTS_PATH = '/repo/posts'
 
-unless Dir.exist?(REPO_PATH)
-  system("git clone #{CONFIG.repo} #{REPO_PATH}")
+unless Dir.exist?("#{REPO_PATH}/.git")
+  system("git clone #{CONFIG.repo} #{REPO_PATH}/.git --bare")
+  Dir.chdir(REPO_PATH)
+  system("git checkout .")
 end
 
 published_files_request.entries.each do |post_folder|
