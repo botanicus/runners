@@ -20,15 +20,15 @@ else
   slug = main_post_file.name.split('.').first
 
   # Add published date.
-  CLIENT.download(main_post_file) do |content|
+  CLIENT.download(main_post_file.path_display) do |content|
     lines = content.split("\n")
     published_content = if content.include?('---')
       header = YAML.load(content)
-      header[:date] = Time.now
-      [header.to_yaml, '---', lines[lines.index('---')..-1]].join("\n\n")
+      header['date'] = Time.now
+      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[lines.index('---')..-1].join("\n")].join("\n\n")
     else
-      header = {date: Time.now}
-      [header.to_yaml, '---', lines[lines.index('---')..-1]].join("\n\n")
+      header = {'date' => Time.now}
+      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
     end
 
     CLIENT.upload(main_post_file.path_display, published_content)
@@ -50,19 +50,35 @@ if published_files_request.has_more?
 end
 
 # Download every published post from Dropbox and expose it on REPO_PATH.
-File.write(CONFIG.private_ssh_key, '/root/id_rsa')
+Dir.mkdir('/root/.ssh')
+File.write('/root/.ssh/id_rsa', CONFIG.private_ssh_key)
 
 REPO_PATH = '/repo'
 POSTS_PATH = '/repo/posts'
 
+def run(command)
+  puts "$ #{command}"
+  puts %x{#{command}}
+  if $?.exitstatus != 0
+    abort "\nExited with #{$?.exitstatus}"
+  end
+end
+
 unless Dir.exist?("#{REPO_PATH}/.git")
-  system("git clone #{CONFIG.repo} #{REPO_PATH}/.git --bare")
+  run "chmod 700 /root/.ssh"
+  run "chmod 600 /root/.ssh/id_rsa"
+  run "cat /root/.ssh/id_rsa"
+  run "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+  run "git clone #{CONFIG.repo} repo"
+  run "mv repo/.git #{REPO_PATH}/.git"
   Dir.chdir(REPO_PATH)
-  system("git checkout .")
+  run "git checkout ."
 end
 
 published_files_request.entries.each do |post_folder|
-  Dir.mkdir(File.join(POSTS_PATH, post_folder.name))
+  post_folder_path = File.join(POSTS_PATH, post_folder.name)
+  Dir.mkdir(post_folder_path) unless Dir.exist?(post_folder_path)
+
   CLIENT.list_folder(post_folder.path_display).entries.each do |file|
     CLIENT.download(file.path_display) do |content|
       File.write(File.join(POSTS_PATH, post_folder.name, file.name), content)
@@ -71,6 +87,8 @@ published_files_request.entries.each do |post_folder|
 end
 
 Dir.chdir(REPO_PATH) do
-  system("git add #{POSTS_PATH}")
-  system("git commit -a -m 'Updates'")
+  run "git config --global user.email 'james+git@botanicus.me'"
+  run "git config --global user.name 'Dropbox uploader'"
+  run "git add #{POSTS_PATH}"
+  run "git commit -a -m 'Updates'"
 end
