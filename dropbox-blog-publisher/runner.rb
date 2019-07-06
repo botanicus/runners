@@ -18,6 +18,8 @@ if drop_folder_items.entries.empty?
 else
   main_post_file = drop_folder_items.entries.find { |file| file.name.match(/\.md$/) }
   slug = main_post_file.name.split('.').first
+  p [:m, main_post_file]
+  p [:s, slug]
 
   # Add published date.
   CLIENT.download(main_post_file.path_display) do |content|
@@ -31,11 +33,20 @@ else
       [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
     end
 
-    CLIENT.upload(main_post_file.path_display, published_content)
+    path = main_post_file.path_display
+    new_path = File.expand_path("#{main_post_file.path_display}/../post.md")
+    # path = "/Escrituras/Blog/Drop to publish/post.md"
+    p [:p, path]
+    p [:np, new_path]
+    p [:c, published_content]
+    CLIENT.upload(new_path, "#{published_content.chomp}\n")
+    CLIENT.delete(path)
   end
 
+  drop_folder_items = CLIENT.list_folder(CONFIG.drop_folder)
   timestamp = Time.now.strftime('%Y-%m-%d')
   published_post_path = File.join(CONFIG.archive_folder, "#{timestamp}-#{slug}")
+
   CLIENT.create_folder(published_post_path)
   drop_folder_items.entries.each do |file|
     LOGGER.info("Moving #{file.name} -> #{published_post_path}")
@@ -58,7 +69,8 @@ POSTS_PATH = '/repo/posts'
 
 def run(command)
   puts "$ #{command}"
-  puts %x{#{command}}
+  result = %x{#{command}}
+  puts result unless result.empty?
   if $?.exitstatus != 0
     abort "\nExited with #{$?.exitstatus}"
   end
@@ -91,4 +103,5 @@ Dir.chdir(REPO_PATH) do
   run "git config --global user.name 'Dropbox uploader'"
   run "git add #{POSTS_PATH}"
   run "git commit -a -m 'Updates'"
+  run "git push origin master"
 end
