@@ -100,5 +100,6 @@ end
 Dir.chdir(REPO_PATH) do
   run "git add #{POSTS_PATH}"
   run "git commit -a -m 'Updates'"
+  run "git pull --rebase"
   run "git push origin master"
 end
