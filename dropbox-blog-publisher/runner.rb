@@ -18,8 +18,7 @@ if drop_folder_items.entries.empty?
 else
   main_post_file = drop_folder_items.entries.find { |file| file.name.match(/\.md$/) }
   slug = main_post_file.name.split('.').first
-  p [:m, main_post_file]
-  p [:s, slug]
+  LOGGER.info("Publishing #{slug}")
 
   # Add published date.
   CLIENT.download(main_post_file.path_display) do |content|
@@ -35,10 +34,7 @@ else
 
     path = main_post_file.path_display
     new_path = File.expand_path("#{main_post_file.path_display}/../post.md")
-    # path = "/Escrituras/Blog/Drop to publish/post.md"
-    p [:p, path]
-    p [:np, new_path]
-    p [:c, published_content]
+    LOGGER.info("Renaming #{slug}.md -> post.md and adding a timestamp")
     CLIENT.upload(new_path, "#{published_content.chomp}\n")
     CLIENT.delete(path)
   end
@@ -47,6 +43,7 @@ else
   timestamp = Time.now.strftime('%Y-%m-%d')
   published_post_path = File.join(CONFIG.archive_folder, "#{timestamp}-#{slug}")
 
+  LOGGER.info("Publishing #{published_post_path}")
   CLIENT.create_folder(published_post_path)
   drop_folder_items.entries.each do |file|
     LOGGER.info("Moving #{file.name} -> #{published_post_path}")
@@ -76,11 +73,13 @@ def run(command)
   end
 end
 
+run "chmod 700 /root/.ssh"
+run "chmod 600 /root/.ssh/id_rsa"
+run "ssh-keyscan -H github.com >> /root/.ssh/known_hosts"
+run "git config --global user.email 'james+git@botanicus.me'"
+run "git config --global user.name 'Dropbox uploader'"
+
 unless Dir.exist?("#{REPO_PATH}/.git")
-  run "chmod 700 /root/.ssh"
-  run "chmod 600 /root/.ssh/id_rsa"
-  run "cat /root/.ssh/id_rsa"
-  run "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
   run "git clone #{CONFIG.repo} repo"
   run "mv repo/.git #{REPO_PATH}/.git"
   Dir.chdir(REPO_PATH)
@@ -99,8 +98,6 @@ published_files_request.entries.each do |post_folder|
 end
 
 Dir.chdir(REPO_PATH) do
-  run "git config --global user.email 'james+git@botanicus.me'"
-  run "git config --global user.name 'Dropbox uploader'"
   run "git add #{POSTS_PATH}"
   run "git commit -a -m 'Updates'"
   run "git push origin master"
