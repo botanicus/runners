@@ -26,7 +26,7 @@ else
     published_content = if content.include?('---')
       header = YAML.load(content)
       header['date'] = Time.now
-      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[lines.index('---')..-1].join("\n")].join("\n\n")
+      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[(lines.index('---') + 1)..-1].join("\n")].join("\n\n")
     else
       header = {'date' => Time.now}
       [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
@@ -55,6 +55,7 @@ published_files_request = CLIENT.list_folder(CONFIG.archive_folder)
 
 if published_files_request.has_more?
   LOGGER.info("IMPLEMENT ME")
+  require 'pry'; binding.pry ###
 end
 
 # Download every published post from Dropbox and expose it on REPO_PATH.
@@ -81,25 +82,30 @@ run "git config --global user.name 'Dropbox uploader'"
 
 unless Dir.exist?("#{REPO_PATH}/.git")
   run "git clone #{CONFIG.repo} repo"
-  run "mv repo/.git #{REPO_PATH}/.git"
-  Dir.chdir(REPO_PATH)
-  run "git checkout ."
-end
-
-published_files_request.entries.each do |post_folder|
-  post_folder_path = File.join(POSTS_PATH, post_folder.name)
-  Dir.mkdir(post_folder_path) unless Dir.exist?(post_folder_path)
-
-  CLIENT.list_folder(post_folder.path_display).entries.each do |file|
-    CLIENT.download(file.path_display) do |content|
-      File.write(File.join(POSTS_PATH, post_folder.name, file.name), content)
-    end
-  end
 end
 
 Dir.chdir(REPO_PATH) do
+  run "git checkout ."
+  run "git clean -fd"
+  run "git pull --rebase"
+  run "rm -rf #{POSTS_PATH}; mkdir #{POSTS_PATH}"
+
+  published_files_request.entries.each do |post_folder|
+    post_folder_path = File.join(POSTS_PATH, post_folder.name)
+    Dir.mkdir(post_folder_path) unless Dir.exist?(post_folder_path)
+
+    request = CLIENT.list_folder(post_folder.path_display)
+    if request.has_more?
+      require 'pry'; binding.pry ###
+    end
+    request.entries.each do |file|
+      CLIENT.download(file.path_display) do |content|
+        File.write(File.join(POSTS_PATH, post_folder.name, file.name), content)
+      end
+    end
+  end
+
   run "git add #{POSTS_PATH}"
   run "git commit -a -m 'Updates'"
-  run "git pull --rebase"
   run "git push origin master"
 end
