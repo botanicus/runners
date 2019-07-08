@@ -23,14 +23,14 @@ end
 # rsync dev, rsync sys
 Dir.chdir('/backups')
 
-run "test -d dev || mkdir dev"
-Dir.chdir('dev') do
-  run "rsync root@dev:/root/projects dev"
-end
+# run "test -d dev || mkdir dev"
+# Dir.chdir('dev') do
+#   run "rsync root@dev:/root/projects dev"
+# end
 
 run "test -d sys || mkdir sys"
 Dir.chdir('sys') do
-  run "cp -f /var/spool/cron/crontabs/root crontab"
+  run "cp -f /self/var/spool/cron/crontabs/root crontab"
 end
 
 backup_name = "#{Time.now.strftime('%Y-%m-%d')}.tbz"
