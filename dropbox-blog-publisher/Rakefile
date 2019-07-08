@@ -1,4 +1,4 @@
-NAME = 'botanicus/dropbox-blog-publisher'
+NAME = "botanicus/#{File.basename(File.expand_path('..', __FILE__))}"
 
 desc "Build the Docker image"
 task :build do
