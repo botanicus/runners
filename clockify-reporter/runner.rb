@@ -30,7 +30,7 @@ def warn(message)
 end
 
 def make_request(http_method, path)
-  request = HTTP.headers({'Content-Type' => 'application/json', 'X-Api-Key' => API_KEY})
+  request = HTTP.headers({'Content-Type' => 'application/json', 'X-Api-Key' => CONFIG.clockify_api_key})
   JSON.parse(request.send(http_method, "https://api.clockify.me/api/v1/#{path}").body.to_s)
 end
 
@@ -38,9 +38,9 @@ def hours_projected_for_date(date)
   if date.sunday?
     Hour.new
   elsif date.saturday?
-    Hour.parse(CONFIG.target_hours_saturday)
+    Hour.parse("#{CONFIG.target_hours_saturday}:00")
   else
-    Hour.parse(CONFIG.target_hours_work_day)
+    Hour.parse("#{CONFIG.target_hours_work_day}:00")
   end
 end
 
@@ -105,19 +105,39 @@ hours_projected_to_date = (from_date..Date.today).reduce(Hour.new) do |sum, date
 end
 
 hours_worked = Hour.from(minutes: total_minutes)
-sum_made = total_minutes * CONFIG.hourly_rate.to_i / 60
+sum_made = total_minutes * CONFIG.hourly_rate / 60
 
-# Today
+
+today_entries = entries.select do |entry|
+  Date.today <= Date.parse(entry['timeInterval']['start'])
+end
+
+total_minutes_today = today_entries.reduce(0) do |sum, entry|
+  if entry['timeInterval']['duration']
+    start_time = Time.parse(entry['timeInterval']['start'])
+    end_time = Time.parse(entry['timeInterval']['end'])
+    duration = end_time - start_time
+  else
+    start_time = Time.parse(entry['timeInterval']['start'])
+    duration = Time.now - start_time
+  end
+
+  sum + (duration / 60).to_i
+end
+
+hours_worked_today = Hour.from(minutes: total_minutes_today)
+sum_made_today = total_minutes_today * CONFIG.hourly_rate / 60
+
 hours_projected_for_today = hours_projected_for_date(Date.today)
 
-# if hours_worked_today < hours_projected_for_today
-#   p title: "You made $#{sum_made_today} today", message: "You were #{hours_projected_for_today - hours_worked_today} off the target.", html: 1
-# else
-#   p title: "Good job! You hit the target for today!", message: "You made <b>$#{sum_made_today}</b> today. Nice!", html: 1
-# end
+if hours_worked_today < hours_projected_for_today
+  notify title: "You made $#{sum_made_today} today", message: "You were #{hours_projected_for_today - hours_worked_today} off the target.", html: 1
+else
+  notify title: "Good job! You hit the target for today!", message: "You made <b>$#{sum_made_today}</b> today. Nice!", html: 1
+end
 
 if hours_worked < hours_projected_to_date
-  p title: "Stay on the target!", message: "You are off the target by <b>#{hours_projected_to_date - hours_worked}</b> hours. You made <b>$#{sum_made}</b> from #{from_date.strftime('%A %d/%m')}.", html: 1
+  notify title: "Stay on the target!", message: "You are off the target by <b>#{hours_projected_to_date - hours_worked}</b> hours. You made <b>$#{sum_made}</b> from #{from_date.strftime('%A %d/%m')}.", html: 1
 else
-  p title: "Good job! You're on the target!", message: "You are exceeding the target by <b>#{hours_worked - hours_projected_to_date}</b>. You made <b>$#{sum_made}</b> from #{from_date.strftime('%A %d/%m')}.", html: 1
+  notify title: "Good job! You're on the target!", message: "You are exceeding the target by <b>#{hours_worked - hours_projected_to_date}</b>. You made <b>$#{sum_made}</b> from #{from_date.strftime('%A %d/%m')}.", html: 1
 end

@@ -7,7 +7,7 @@ GEM
     domain_name (0.5.20180417)
       unf (>= 0.0.5, < 1.0.0)
     excon (0.63.0)
-    hour-ruby (0.0.3)
+    hour-ruby (0.0.4)
     http (2.2.2)
       addressable (~> 2.3)
       http-cookie (~> 1.0)

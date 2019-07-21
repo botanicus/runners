@@ -4,3 +4,7 @@ gem 'http'
 gem 'hour-ruby'
 gem 'pushover'
 gem 'logglier'
+
+group(:development) do
+  gem 'pry'
+end
