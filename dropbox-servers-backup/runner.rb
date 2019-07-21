@@ -23,10 +23,15 @@ end
 # rsync dev, rsync sys
 Dir.chdir('/backups')
 
-# run "test -d dev || mkdir dev"
-# Dir.chdir('dev') do
-#   run "rsync root@dev:/root/projects dev"
-# end
+# Generate SSH keys and put them to ~/.ssh/authorized_keys.
+# Then:
+# Host dev
+#   HostName 134.209.47.239
+#   User root
+run "test -d dev || mkdir dev"
+Dir.chdir('dev') do
+  run "rsync root@dev:/root/projects dev --recursive --delete"
+end
 
 run "test -d sys || mkdir sys"
 Dir.chdir('sys') do
@@ -37,3 +42,5 @@ backup_name = "#{Time.now.strftime('%Y-%m-%d')}.tbz"
 run "tar cvjpf #{backup_name} *"
 
 CLIENT.upload(File.join(CONFIG.backup_folder, backup_name), File.read(backup_name))
+
+run "rm #{backup_name}"
