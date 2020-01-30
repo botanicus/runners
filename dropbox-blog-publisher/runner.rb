@@ -96,7 +96,7 @@ unless Dir.exist?("#{REPO_PATH}/.git")
 end
 
 Dir.chdir(REPO_PATH) do
-  previous_head = `git rev-parse HEAD`
+  previous_head = `git rev-parse HEAD`.chomp
 
   run "git checkout ."
   run "git clean -fd"
