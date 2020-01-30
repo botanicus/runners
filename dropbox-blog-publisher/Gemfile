@@ -5,4 +5,5 @@ group(:development) do
 end
 
 gem 'logglier'
+gem 'pushover'
 gem 'dropbox_api'
