@@ -74,6 +74,7 @@ File.write('/root/.ssh/id_rsa', RUNNER.config.private_ssh_key)
 
 REPO_PATH = '/repo'
 POSTS_PATH = '/repo/posts'
+OLD_POSTS_PATH = '/repo/old-posts'
 
 def run(command)
   puts "$ #{command}"
@@ -98,7 +99,7 @@ Dir.chdir(REPO_PATH) do
   run "git checkout ."
   run "git clean -fd"
   run "git pull --rebase"
-  run "rm -rf #{POSTS_PATH}; mkdir #{POSTS_PATH}"
+  run "mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}"
 
   published_files_request.entries.each do |post_folder|
     post_folder_path = File.join(POSTS_PATH, post_folder.name)
@@ -112,10 +113,18 @@ Dir.chdir(REPO_PATH) do
     end
 
     request.entries.each do |file|
-      require 'pry'; binding.pry ###
-      # if File.mtime()
-      CLIENT.download(file.path_display) do |content|
-        File.write(File.join(POSTS_PATH, post_folder.name, file.name), content)
+      post_path = File.join(POSTS_PATH, post_folder.name, file.name)
+      old_post_path = File.join(OLD_POSTS_PATH, post_folder.name, file.name)
+
+      if file.server_modified > File.mtime(old_post_path)
+        RUNNER.info("Updating #{file.path_display} in Dropbox")
+        content = File.read(old_post_path)
+        File.write(post_path, content)
+        CLIENT.upload(file.path_display, content)
+      else
+        CLIENT.download(file.path_display) do |content|
+          File.write(post_path, content)
+        end
       end
     end
   end
