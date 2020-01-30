@@ -101,7 +101,7 @@ Dir.chdir(REPO_PATH) do
   run "git checkout ."
   run "git clean -fd"
   run "git pull --rebase"
-  changed_files = `git diff --name-only #{previous_head} HEAD`.lines.map(&:chomp)
+  changed_files = `git diff --name-only #{previous_head} HEAD posts/`.lines.map(&:chomp)
   run "mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}"
 
   unless changed_files.empty?

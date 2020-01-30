@@ -44,9 +44,14 @@ class Runner
 
     info("PushOver message: #{message.inspect}")
 
-    response = message.push
-    info("PushOver message delivery status: #{response.status == 1}")
-    response.status == 1
+    begin
+      response = message.push
+
+      info("PushOver message delivery status: #{response.status == 1}")
+      response.status == 1
+    rescue => e
+      p [:error, e]
+    end
   end
 
   def validate_config_key(key)
