@@ -104,6 +104,10 @@ Dir.chdir(REPO_PATH) do
   changed_files = `git diff --name-only #{previous_head} HEAD`.lines.map(&:chomp)
   run "mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}"
 
+  unless changed_files.empty?
+    RUNNER.notify(title: "Manually updated blog entries will be changed in Dropbox", message: changed_files.join(', '))
+  end
+
   published_files_request.entries.each do |post_folder|
     post_folder_path = File.join(POSTS_PATH, post_folder.name)
     Dir.mkdir(post_folder_path) unless Dir.exist?(post_folder_path)
