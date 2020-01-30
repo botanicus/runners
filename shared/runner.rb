@@ -1,17 +1,17 @@
-require 'logglier'
-require 'pushover'
-
 class Runner
-  def new(runner_file)
+  def initialize(runner_file)
     @dir = File.dirname(runner_file)
   end
 
   def config
-    @config ||= instance_eval(File.read(File.join('config.rb', @dir)))
+    @config ||= instance_eval(File.read(File.expand_path('config.rb', @dir)))
   end
 
   def logger
-    @logger ||= Logglier.new(self.validate_config_key('loggly_url'), threaded: true)
+    @logger ||= begin
+      require 'logglier'
+      Logglier.new(self.validate_config_key('loggly_url'), threaded: true)
+    end
   end
 
   def info(message)
@@ -30,12 +30,14 @@ class Runner
   #   url: bookmark.url
   # )
   def notify(**options)
+    require 'pushover'
+
     clean_options = options.reduce(Hash.new) do |buffer, (key, value)|
       buffer.merge!(key => value) if value
       buffer
     end
 
-    message = Pushover::Message.create(clean_options.merge(
+    message = Pushover::Message.new(clean_options.merge(
       token: self.validate_config_key('pushover_app_token'),
       user: self.validate_config_key('pushover_user_key'),
     ))
@@ -51,7 +53,7 @@ class Runner
     if self.config.respond_to?(key)
       self.config.send(key)
     else
-      raise "Config doesn't have ##{key}"
+      raise "Runner#config #{self.config.inspect} doesn't have ##{key}"
     end
   end
 end

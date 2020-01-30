@@ -24,6 +24,8 @@ else
   # Add published date.
   begin
     CLIENT.download(main_post_file.path_display) do |content|
+      content = content.force_encoding('utf-8')
+
       lines = content.split("\n")
       published_content = if content.include?('---')
         header = YAML.load(content)
@@ -41,7 +43,9 @@ else
       CLIENT.upload(new_path, "#{published_content.chomp}\n")
       CLIENT.delete(path)
     end
-  rescue error
+
+    RUNNER.notify(title: "Blog post #{slug} scheduled for publication")
+  rescue Exception => error
     RUNNER.notify(title: "Post #{slug} cannot be published", message: "#{error.class}: #{error.message}")
   end
 
@@ -60,7 +64,7 @@ end
 published_files_request = CLIENT.list_folder(RUNNER.config.archive_folder)
 
 if published_files_request.has_more?
-  RUNNER.info("IMPLEMENT ME")
+  RUNNER.notify(title: "Blog error", message: "Dropbox pagination error, there might be missing files.")
   require 'pry'; binding.pry ###
 end
 
@@ -101,10 +105,15 @@ Dir.chdir(REPO_PATH) do
     Dir.mkdir(post_folder_path) unless Dir.exist?(post_folder_path)
 
     request = CLIENT.list_folder(post_folder.path_display)
+
     if request.has_more?
+      RUNNER.notify(title: "Blog error", message: "Dropbox pagination error, there might be missing files.")
       require 'pry'; binding.pry ###
     end
+
     request.entries.each do |file|
+      require 'pry'; binding.pry ###
+      # if File.mtime()
       CLIENT.download(file.path_display) do |content|
         File.write(File.join(POSTS_PATH, post_folder.name, file.name), content)
       end
