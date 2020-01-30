@@ -96,9 +96,12 @@ unless Dir.exist?("#{REPO_PATH}/.git")
 end
 
 Dir.chdir(REPO_PATH) do
+  previous_head = `git rev-parse HEAD`
+
   run "git checkout ."
   run "git clean -fd"
   run "git pull --rebase"
+  changed_files = `git diff --name-only #{previous_head} HEAD`.lines.map(&:chomp)
   run "mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}"
 
   published_files_request.entries.each do |post_folder|
@@ -116,20 +119,17 @@ Dir.chdir(REPO_PATH) do
       post_path = File.join(POSTS_PATH, post_folder.name, file.name)
       old_post_path = File.join(OLD_POSTS_PATH, post_folder.name, file.name)
 
-      if file.server_modified > File.mtime(old_post_path)
+      if changed_files.include?(File.join('posts', post_folder.name, file.name)) # FIXME: hardcoded, but must be relative.
         RUNNER.info("Updating #{file.path_display} in Dropbox")
-        content = File.read(old_post_path)
-        File.write(post_path, content)
-        CLIENT.upload(file.path_display, content)
+        run "cp #{old_post_path} #{post_path}"
+        CLIENT.delete(file.path_display)
+        CLIENT.upload(file.path_display, File.binread(old_post_path))
       else
-        CLIENT.download(file.path_display) do |content|
-          File.write(post_path, content)
-        end
+        run "cp #{old_post_path} #{post_path}"
       end
     end
   end
 
   run "git add #{POSTS_PATH}"
-  run "git commit -a -m 'Updates'"
-  run "git push origin master"
+  run "git commit -a -m 'Updates' && git push origin master || exit" # This is so this never fails.
 end
