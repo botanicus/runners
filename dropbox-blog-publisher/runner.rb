@@ -1,66 +1,72 @@
 #!/usr/bin/env ruby
 
+# ../shared/runner.rb is copied to lib/runner.rb when rake build is run.
+require_relative './lib/runner'
+
 require 'dropbox_api'
-require 'logglier'
 require 'yaml'
 
-CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
-LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
-CLIENT = DropboxApi::Client.new(CONFIG.dropbox_access_token)
+RUNNER = Runner.new(__FILE__)
+CLIENT = DropboxApi::Client.new(RUNNER.config.dropbox_access_token)
 
-LOGGER.info("Running botanicus/dropbox-blog-publisher")
+RUNNER.info("Running botanicus/dropbox-blog-publisher")
 
 # Drop-folder handling.
-drop_folder_items = CLIENT.list_folder(CONFIG.drop_folder)
+drop_folder_items = CLIENT.list_folder(RUNNER.config.drop_folder)
 
 if drop_folder_items.entries.empty?
-  LOGGER.info("Nothing found in #{CONFIG.drop_folder}")
+  RUNNER.info("Nothing found in #{RUNNER.config.drop_folder}")
 else
   main_post_file = drop_folder_items.entries.find { |file| file.name.match(/\.md$/) }
   slug = main_post_file.name.split('.').first
-  LOGGER.info("Publishing #{slug}")
+  RUNNER.info("Publishing #{slug}")
 
   # Add published date.
-  CLIENT.download(main_post_file.path_display) do |content|
-    lines = content.split("\n")
-    published_content = if content.include?('---')
-      header = YAML.load(content)
-      header['date'] = Time.now
-      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[(lines.index('---') + 1)..-1].join("\n")].join("\n\n")
-    else
-      header = {'date' => Time.now}
-      [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
-    end
+  begin
+    CLIENT.download(main_post_file.path_display) do |content|
+      lines = content.split("\n")
+      published_content = if content.include?('---')
+        header = YAML.load(content)
+        header['date'] ||= Time.now # Allow date to already be defined, as if we have published
+        # en version and now we want to publish es version with the same date.
+        [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[(lines.index('---') + 1)..-1].join("\n")].join("\n\n")
+      else
+        header = {'date' => Time.now}
+        [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
+      end
 
-    path = main_post_file.path_display
-    new_path = File.expand_path("#{main_post_file.path_display}/../post.md")
-    LOGGER.info("Renaming #{slug}.md -> post.md and adding a timestamp")
-    CLIENT.upload(new_path, "#{published_content.chomp}\n")
-    CLIENT.delete(path)
+      path = main_post_file.path_display
+      new_path = File.expand_path("#{main_post_file.path_display}/../post.md")
+      RUNNER.info("Renaming #{slug}.md -> post.md and adding a timestamp")
+      CLIENT.upload(new_path, "#{published_content.chomp}\n")
+      CLIENT.delete(path)
+    end
+  rescue error
+    RUNNER.notify(title: "Post #{slug} cannot be published", message: "#{error.class}: #{error.message}")
   end
 
-  drop_folder_items = CLIENT.list_folder(CONFIG.drop_folder)
+  drop_folder_items = CLIENT.list_folder(RUNNER.config.drop_folder)
   timestamp = Time.now.strftime('%Y-%m-%d')
-  published_post_path = File.join(CONFIG.archive_folder, "#{timestamp}-#{slug}")
+  published_post_path = File.join(RUNNER.config.archive_folder, "#{timestamp}-#{slug}")
 
-  LOGGER.info("Publishing #{published_post_path}")
+  RUNNER.info("Publishing #{published_post_path}")
   CLIENT.create_folder(published_post_path)
   drop_folder_items.entries.each do |file|
-    LOGGER.info("Moving #{file.name} -> #{published_post_path}")
+    RUNNER.info("Moving #{file.name} -> #{published_post_path}")
     CLIENT.move(file.path_display, File.join(published_post_path, file.name))
   end
 end
 
-published_files_request = CLIENT.list_folder(CONFIG.archive_folder)
+published_files_request = CLIENT.list_folder(RUNNER.config.archive_folder)
 
 if published_files_request.has_more?
-  LOGGER.info("IMPLEMENT ME")
+  RUNNER.info("IMPLEMENT ME")
   require 'pry'; binding.pry ###
 end
 
 # Download every published post from Dropbox and expose it on REPO_PATH.
 Dir.mkdir('/root/.ssh')
-File.write('/root/.ssh/id_rsa', CONFIG.private_ssh_key)
+File.write('/root/.ssh/id_rsa', RUNNER.config.private_ssh_key)
 
 REPO_PATH = '/repo'
 POSTS_PATH = '/repo/posts'
@@ -81,7 +87,7 @@ run "git config --global user.email 'james+git@botanicus.me'"
 run "git config --global user.name 'Dropbox uploader'"
 
 unless Dir.exist?("#{REPO_PATH}/.git")
-  run "git clone #{CONFIG.repo} repo"
+  run "git clone #{RUNNER.config.repo} repo"
 end
 
 Dir.chdir(REPO_PATH) do
