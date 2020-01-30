@@ -11,7 +11,7 @@ class Runner
   end
 
   def logger
-    @logger ||= Logglier.new(self.config.loggly_url, threaded: true)
+    @logger ||= Logglier.new(self.validate_config_key('loggly_url'), threaded: true)
   end
 
   def info(message)
@@ -36,8 +36,8 @@ class Runner
     end
 
     message = Pushover::Message.create(clean_options.merge(
-      token: self.config.pushover_app_token,
-      user: self.config.pushover_user_key,
+      token: self.validate_config_key('pushover_app_token'),
+      user: self.validate_config_key('pushover_user_key'),
     ))
 
     info("PushOver message: #{message.inspect}")
@@ -45,5 +45,13 @@ class Runner
     response = message.push
     info("PushOver message delivery status: #{response.status == 1}")
     response.status == 1
+  end
+
+  def validate_config_key(key)
+    if self.config.respond_to?(key)
+      self.config.send(key)
+    else
+      raise "Config doesn't have ##{key}"
+    end
   end
 end
