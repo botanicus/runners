@@ -70,7 +70,7 @@ class GitRunner
       @runner.sh("cp #{old_post_path} #{post_path}", quiet: true)
     else
       # Handle newly published posts (as in, posts just moved from the drop folder).
-      content = dropbox_runner.load_entry(file, post_path)
+      content = dropbox_runner.load_entry(file)
       File.write(post_path, content)
     end
   end

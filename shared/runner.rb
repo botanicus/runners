@@ -54,6 +54,13 @@ class Runner
     end
   end
 
+  def notify_about_error(title, error)
+    self.notify(
+      title: title,
+      message: {error: "#{error.class}: #{error.message}", trace: error.backtrace}.to_yaml
+    )
+  end
+
   def validate_config_key(key)
     if self.config.respond_to?(key)
       self.config.send(key)

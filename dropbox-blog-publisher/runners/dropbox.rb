@@ -1,5 +1,30 @@
 require 'dropbox_api'
 require 'yaml'
+require 'time'
+
+class Post
+  def self.parse(content)
+    lines = content.force_encoding('utf-8').split("\n")
+
+    if content.include?('---')
+      header = YAML.load(content)
+      header['date'] ||= Time.now
+      self.new(header, lines[(lines.index('---') + 2)..-1])
+    else
+      header = {'date' => Time.now}
+      self.new(header, lines)
+    end
+  end
+
+  attr_reader :header, :lines
+  def initialize(header, lines)
+    @header, @lines = header, lines
+  end
+
+  def to_s
+    [@header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', @lines.join("\n")].join("\n\n")
+  end
+end
 
 class DropboxRunner
   def initialize(runner)
@@ -23,7 +48,7 @@ class DropboxRunner
   end
 
   # Used by the GitRunner.
-  def load_entry(file, content)
+  def load_entry(file)
     @dropbox.download(file.path_display) { |content| return content }
   end
 
@@ -34,56 +59,49 @@ class DropboxRunner
     if drop_folder_items.entries.empty?
       @runner.info("Nothing found in #{@runner.config.drop_folder}.")
     else
-      main_post_file = drop_folder_items.entries.find { |file| file.name.match(/\.md$/) }
-      slug = main_post_file.name.split('.').first
-      @runner.notify(title: "Publishing #{slug}")
-      @runner.info("Publishing #{slug}")
-
-      publish_post(main_post_file)
-
-      drop_folder_items = @dropbox.list_folder(@runner.config.drop_folder)
-      timestamp = Time.now.strftime('%Y-%m-%d')
-      published_post_path = File.join(@runner.config.archive_folder, "#{timestamp}-#{slug}")
-
-      @runner.info("Publishing #{published_post_path}")
-      @dropbox.create_folder(published_post_path)
-      drop_folder_items.entries.each do |file|
-        @runner.info("Moving #{file.name} -> #{published_post_path}")
-        @dropbox.move(file.path_display, File.join(published_post_path, file.name))
+      drop_folder_items.entries.select { |file| file.name.match(/\.md$/) }.each do |main_post_file|
+        self.publish_file(main_post_file)
       end
     end
   end
 
   protected
-  def publish_post(main_post_file)
-    @dropbox.download(main_post_file.path_display) do |content|
-      content = content.force_encoding('utf-8')
+  def publish_file(main_post_file)
+    slug = main_post_file.name.split('.').first
 
-      lines = content.split("\n")
-      published_content = if content.include?('---')
-        header = YAML.load(content)
-        header['date'] ||= Time.now # Allow date to already be defined, as if we have published
-        # en version and now we want to publish es version with the same date.
-        [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines[(lines.index('---') + 1)..-1].join("\n")].join("\n\n")
-        p header.to_yaml.chomp.split("\n")[1..-1]
-        puts; puts; puts
-        p lines[(lines.index('---') + 1)..-1]
-        puts; puts; puts
-      else
-        header = {'date' => Time.now}
-        [header.to_yaml.chomp.split("\n")[1..-1].join("\n"), '---', lines.join("\n")].join("\n\n")
-      end
+    content = self.dropbox_read_file(main_post_file.path_display)
+    post = Post.parse(content)
 
-      path = main_post_file.path_display
-      new_path = File.expand_path("#{main_post_file.path_display}/../post.md")
-      @runner.info("Renaming #{slug}.md -> post.md and adding a timestamp")
-      @dropbox.upload(new_path, "#{published_content.chomp}\n")
-      @dropbox.delete(path)
-    end
-
-    @runner.notify(title: "Blog post #{slug} scheduled for publication")
+    published_date_timestamp = post.header['date'].strftime('%Y-%m-%d')
+    self.move_to_published_posts_in_dropbox(main_post_file.path_display, published_date_timestamp, slug, post)
   rescue Exception => error
-    @runner.notify(title: "Post #{slug} cannot be published", message: "#{error.class}: #{error.message}")
+    @runner.notify_about_error("Post #{slug} cannot be published", error)
+  end
+
+  def move_to_published_posts_in_dropbox(old_file_path, timestamp, slug, post)
+    published_post_path = File.join(@runner.config.archive_folder, "#{timestamp}-#{slug}")
+
+    @runner.info("Publishing #{published_post_path}")
+
+    @dropbox.create_folder(published_post_path)
+    @dropbox.upload("#{published_post_path}/post.md", "#{post.to_s}\n")
+    @dropbox.delete(old_file_path)
+
+    self.copy_assets(published_post_path)
+
+    @runner.notify(title: "Blog post #{slug} scheduled for publication", message: post.inspect)
+  end
+
+  def copy_assets(destination)
+    drop_folder_items = @dropbox.list_folder(@runner.config.drop_folder)
+    drop_folder_items.entries.each do |file|
+      @runner.info("Moving #{file.name} -> #{published_post_path}")
+      @dropbox.move(file.path_display, File.join(destination, file.name))
+    end
+  end
+
+  def dropbox_read_file(path)
+    @dropbox.download(path) { |content| return content }
   end
 
   def get_entries(path)
