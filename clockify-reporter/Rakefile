@@ -1,3 +1,0 @@
-NAME = "jakubstastny/#{File.basename(File.expand_path('..', __FILE__))}"
-
-require File.expand_path('../../shared/tasks.rb', __FILE__)
