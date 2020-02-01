@@ -7,7 +7,7 @@ CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
 LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
 CLIENT = DropboxApi::Client.new(CONFIG.dropbox_access_token)
 
-LOGGER.info("Running botanicus/dropbox-group-photos")
+LOGGER.info("Running jakubstastny/dropbox-group-photos")
 
 camera_uploads = CLIENT.list_folder('/Camera Uploads')
 camera_upload_files = camera_uploads.entries.select { |entry| entry.respond_to?(:rev) }

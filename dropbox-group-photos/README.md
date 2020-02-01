@@ -1,13 +1,13 @@
 # About
 
-[DockerHub](https://cloud.docker.com/u/botanicus/repository/docker/botanicus/dropbox-group-photos)
+[DockerHub](https://cloud.docker.com/u/jakubstastny/repository/docker/jakubstastny/dropbox-group-photos)
 
 Move photos in Dropbox from `Camera Uploads` to directories named by `yyy-mm` in configured location.
 
 # Usage
 
 ```
-docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) botanicus/dropbox-group-photos
+docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) jakubstastny/dropbox-group-photos
 ```
 
 Replace `VAR_x`/`VAL_x` with variables from the configuration section.

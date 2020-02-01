@@ -61,7 +61,7 @@ client = Instapaper::Client.new do |client|
 end
 
 # Main.
-info("Running botanicus/instapaper-article-archiver")
+info("Running jakubstastny/instapaper-article-archiver")
 
 bookmarks = client.bookmarks(limit: 500).bookmarks
 

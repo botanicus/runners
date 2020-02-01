@@ -13,7 +13,7 @@ ALLOWED_WIP_ITEMS = ['Personal', 'Trabajo']
 ALLOWED_WORK_ITEMS = ['README.md']
 ALLOWED_PERSONAL_ITEMS = []
 
-LOGGER.info("Running botanicus/dropbox-wip-cleaner")
+LOGGER.info("Running jakubstastny/dropbox-wip-cleaner")
 
 # WIP
 wip_folder_items = CLIENT.list_folder(CONFIG.wip_folder)

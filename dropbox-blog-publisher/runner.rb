@@ -9,7 +9,7 @@ require 'yaml'
 RUNNER = Runner.new(__FILE__)
 CLIENT = DropboxApi::Client.new(RUNNER.config.dropbox_access_token)
 
-RUNNER.info("Running botanicus/dropbox-blog-publisher")
+RUNNER.info("Running jakubstastny/dropbox-blog-publisher")
 
 # Drop-folder handling.
 drop_folder_items = CLIENT.list_folder(RUNNER.config.drop_folder)
@@ -88,7 +88,7 @@ end
 run "chmod 700 /root/.ssh"
 run "chmod 600 /root/.ssh/id_rsa"
 run "ssh-keyscan -H github.com >> /root/.ssh/known_hosts"
-run "git config --global user.email 'james+git@botanicus.me'"
+run "git config --global user.email 'james+git@jakubstastny.me'"
 run "git config --global user.name 'Dropbox uploader'"
 
 unless Dir.exist?("#{REPO_PATH}/.git")

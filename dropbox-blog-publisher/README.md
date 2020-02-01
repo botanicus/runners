@@ -1,13 +1,13 @@
 # About
 
-[DockerHub](https://cloud.docker.com/u/botanicus/repository/docker/botanicus/dropbox-blog-publisher)
+[DockerHub](https://cloud.docker.com/u/jakubstastny/repository/docker/jakubstastny/dropbox-blog-publisher)
 
 Pushes blog posts from Dropbox to GitHub.
 
 # Usage
 
 ```
-docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) botanicus/dropbox-blog-publisher
+docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) jakubstastny/dropbox-blog-publisher
 ```
 
 Replace `VAR_x`/`VAL_x` with variables from the configuration section.

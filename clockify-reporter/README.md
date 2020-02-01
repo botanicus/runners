@@ -1,13 +1,13 @@
 # About
 
-[DockerHub](https://cloud.docker.com/u/botanicus/repository/docker/botanicus/clockify-reporter)
+[DockerHub](https://cloud.docker.com/u/jakubstastny/repository/docker/jakubstastny/clockify-reporter)
 
 Archive old Instapaper articles.
 
 # Usage
 
 ```
-docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) botanicus/clockify-reporter
+docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) jakubstastny/clockify-reporter
 ```
 
 Replace `VAR_x`/`VAL_x` with variables from the configuration section.

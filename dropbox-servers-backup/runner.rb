@@ -8,7 +8,7 @@ CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
 LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
 CLIENT = DropboxApi::Client.new(CONFIG.dropbox_access_token)
 
-LOGGER.info("Running botanicus/dropbox-servers-backup")
+LOGGER.info("Running jakubstastny/dropbox-servers-backup")
 
 def run(command)
   puts "$ #{command}"

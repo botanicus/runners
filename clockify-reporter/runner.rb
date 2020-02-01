@@ -71,7 +71,7 @@ def notify(**options)
 end
 
 # Main.
-info("Running botanicus/#{File.basename(Dir.pwd)}") # TODO: propagate this version to the other runners.
+info("Running jakubstastny/#{File.basename(Dir.pwd)}") # TODO: propagate this version to the other runners.
 
 from_date, to_date = billing_cycle(Date.parse(CONFIG.billing_cycle_start_date))
 
