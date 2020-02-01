@@ -60,11 +60,10 @@ class GitRunner
     post_path = File.join(POSTS_PATH, post_folder.name, file.name)
     old_post_path = File.join(OLD_POSTS_PATH, post_folder.name, file.name)
 
-    @runner.info("Processing #{post_path}")
 
     if self.changed_files.include?(File.join('posts', post_folder.name, file.name)) # FIXME: hardcoded, but must be relative.
       # Handle manual updates in the data.blog repo.
-      @runner.info("Updating #{file.path_display} in Dropbox")
+      @runner.info("Updating #{post_path} in Dropbox")
       system("cp #{old_post_path} #{post_path}")
       dropbox_runner.update(file, File.binread(old_post_path))
     elsif File.exist?(old_post_path) && (file.server_modified.to_date != File.mtime(old_post_path).to_date) # This is not exact, it always re-downloads post from current day, but Dropbox returns weird timestamps, so I guess it's sufficient.
@@ -72,6 +71,8 @@ class GitRunner
       system("cp #{old_post_path} #{post_path}")
     else
       # Handle newly published posts (as in, posts just moved from the drop folder).
+      @runner.info("Updating #{post_path} from Dropbox")
+      # FIXME: We should notify about updates, but since the posts are re-downloaded (see the previous elsif branch), we are not sure if there really has been an update.
       content = dropbox_runner.load_entry(file)
       File.write(post_path, content)
     end
