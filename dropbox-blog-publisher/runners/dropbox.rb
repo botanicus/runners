@@ -7,17 +7,24 @@ class DropboxRunner
   end
 
   # Used by the GitRunner.
-  def list_folder(path)
-    @dropbox.list_folder(path).tap do |request|
-      guard(request)
-    end
+  def post_folder_entries(post_folder)
+    self.get_entries(post_folder.path_display)
   end
 
   # Used by the GitRunner.
-  def published_files
-    published_files_request = @dropbox.list_folder(@runner.config.archive_folder)
-    guard(published_files_request)
-    published_files_request.entries
+  def published_entries
+    self.get_entries(@runner.config.archive_folder)
+  end
+
+  # Used by the GitRunner.
+  def update(file, content)
+    @dropbox.delete(file.path_display)
+    @dropbox.upload(file.path_display, content)
+  end
+
+  # Used by the GitRunner.
+  def load_entry(file, content)
+    @dropbox.download(file.path_display) { |content| return content }
   end
 
   # User by runner.rb.
@@ -25,7 +32,7 @@ class DropboxRunner
     drop_folder_items = @dropbox.list_folder(@runner.config.drop_folder)
 
     if drop_folder_items.entries.empty?
-      @runner.info("Nothing found in #{@runner.config.drop_folder}")
+      @runner.info("Nothing found in #{@runner.config.drop_folder}.")
     else
       main_post_file = drop_folder_items.entries.find { |file| file.name.match(/\.md$/) }
       slug = main_post_file.name.split('.').first
@@ -77,6 +84,10 @@ class DropboxRunner
     @runner.notify(title: "Blog post #{slug} scheduled for publication")
   rescue Exception => error
     @runner.notify(title: "Post #{slug} cannot be published", message: "#{error.class}: #{error.message}")
+  end
+
+  def get_entries(path)
+    @dropbox.list_folder(path).tap { |request| guard(request) }.entries
   end
 
   def guard(request)
