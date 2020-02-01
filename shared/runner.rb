@@ -1,4 +1,11 @@
 class Runner
+  def self.run(runner_file, &block)
+    runner = self.new(runner_file)
+    block.call(runner)
+  rescue Exception => error
+    runner.notify_about_error("An error occured in a runner", error)
+  end
+
   def initialize(runner_file)
     @dir = File.dirname(runner_file)
   end
