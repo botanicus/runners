@@ -61,4 +61,13 @@ class Runner
       raise "Runner#config #{self.config.inspect} doesn't have ##{key}"
     end
   end
+
+  def sh(command, quiet: false)
+    puts "$ #{command}" unless quiet
+    result = %x{#{command}}
+    puts result unless result.empty? || quiet
+    if $?.exitstatus != 0
+      abort "\nExited with #{$?.exitstatus}"
+    end
+  end
 end
