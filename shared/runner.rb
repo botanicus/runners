@@ -10,7 +10,7 @@ class Runner
   def logger
     @logger ||= begin
       require 'logglier'
-      Logglier.new(self.validate_config_key('loggly_url'), threaded: true)
+      Logglier.new(self.validate_config_key('loggly_url'))
     end
   end
 
@@ -69,10 +69,10 @@ class Runner
     end
   end
 
-  def sh(command, quiet: false)
-    puts "$ #{command}" unless quiet
+  def sh(command)
+    puts "$ #{command}"
     result = %x{#{command}}
-    puts result unless result.empty? || quiet
+    puts result unless result.empty?
     if $?.exitstatus != 0
       abort "\nExited with #{$?.exitstatus}"
     end

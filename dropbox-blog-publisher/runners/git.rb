@@ -12,14 +12,14 @@ class GitRunner
   # Used by runner.rb.
   def reset_git_repo
     @previous_head = `git rev-parse HEAD`.chomp
-    @runner.sh("git checkout .", quiet: true)
-    @runner.sh("git clean -fd", quiet: true)
-    @runner.sh("git pull --rebase", quiet: true)
+    system("git checkout .")
+    system("git clean -fd")
+    system("git pull --rebase")
   end
 
   # Used by runner.rb.
   def process(dropbox_runner)
-    @runner.sh("mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}", quiet: true)
+    system("mv #{POSTS_PATH} #{OLD_POSTS_PATH}; mkdir #{POSTS_PATH}")
 
     notify_about_files_to_be_changed_in_dropbox unless self.changed_files.empty?
 
@@ -36,7 +36,9 @@ class GitRunner
   # Used by runner.rb.
   def commit_and_push
     @runner.sh("git add #{POSTS_PATH}")
-    @runner.sh("git commit -a -m 'Updates' && git push origin master || exit") # This is so this never fails.
+    if system("git commit -a -m 'Updates'")
+      @runner.sh("git push origin master")
+    end
   end
 
   # Used by runner.rb.
@@ -63,11 +65,11 @@ class GitRunner
     if self.changed_files.include?(File.join('posts', post_folder.name, file.name)) # FIXME: hardcoded, but must be relative.
       # Handle manual updates in the data.blog repo.
       @runner.info("Updating #{file.path_display} in Dropbox")
-      @runner.sh("cp #{old_post_path} #{post_path}", quiet: true)
+      system("cp #{old_post_path} #{post_path}")
       dropbox_runner.update(file, File.binread(old_post_path))
-    elsif File.exist?(old_post_path)
+    elsif File.exist?(old_post_path) && (file.server_modified.to_date != File.mtime(old_post_path).to_date) # This is not exact, it always re-downloads post from current day, but Dropbox returns weird timestamps, so I guess it's sufficient.
       # Handle unchanged posts.
-      @runner.sh("cp #{old_post_path} #{post_path}", quiet: true)
+      system("cp #{old_post_path} #{post_path}")
     else
       # Handle newly published posts (as in, posts just moved from the drop folder).
       content = dropbox_runner.load_entry(file)
@@ -78,17 +80,17 @@ class GitRunner
   def setup_ssh_keys
     Dir.mkdir('/root/.ssh')
     File.write('/root/.ssh/id_rsa', @runner.config.private_ssh_key)
-    @runner.sh("chmod 700 /root/.ssh", quiet: true)
-    @runner.sh("chmod 600 /root/.ssh/id_rsa", quiet: true)
+    system("chmod 700 /root/.ssh")
+    system("chmod 600 /root/.ssh/id_rsa")
   end
 
   def setup_git_user
-    @runner.sh("git config --global user.email 'james+git@jakubstastny.me'", quiet: true)
-    @runner.sh("git config --global user.name 'Dropbox uploader'", quiet: true)
+    system("git config --global user.email '#{@runner.config.git_email}'")
+    system("git config --global user.name '#{@runner.config.git_name}'")
   end
 
   def setup_git_repo
-    @runner.sh("ssh-keyscan -H github.com >> /root/.ssh/known_hosts 2> /dev/null", quiet: true)
+    system("ssh-keyscan -H github.com >> /root/.ssh/known_hosts 2> /dev/null")
 
     unless Dir.exist?("#{REPO_PATH}/.git")
       @runner.sh("git clone #{@runner.config.repo} repo")

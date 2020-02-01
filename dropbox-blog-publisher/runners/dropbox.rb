@@ -59,6 +59,8 @@ class DropboxRunner
     if drop_folder_items.entries.empty?
       @runner.info("Nothing found in #{@runner.config.drop_folder}.")
     else
+      # NOTE: You can put multiple posts ONLY if they don't have assets!
+      # We could handle assets only would we parse the post and from the body scan which assets should we copy.
       drop_folder_items.entries.select { |file| file.name.match(/\.md$/) }.each do |main_post_file|
         self.publish_file(main_post_file)
       end
