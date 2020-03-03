@@ -9,7 +9,6 @@ require_relative './runners/dropbox'
 Runner.run(__FILE__) do |runner|
   git_runner, dropbox_runner = GitRunner.new(runner), DropboxRunner.new(runner)
 
-  runner.info("Running dropbox-blog-publisher.")
   dropbox_runner.publish_drop_folder_entries
 
   git_runner.setup_git

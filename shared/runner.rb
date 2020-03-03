@@ -1,3 +1,6 @@
+require 'pry'
+require 'yaml'
+
 class Runner
   def self.run(runner_file, &block)
     runner = self.new(runner_file)
@@ -31,6 +34,13 @@ class Runner
     self.logger.warn(message)
   end
 
+  # # Until https://github.com/erniebrodeur/pushover/issues/34 is fixed
+  # def notify(**options)
+  #   command = %Q{curl -s --form-string "token=#{self.validate_config_key('pushover_app_token')}" --form-string "user=#{self.validate_config_key('pushover_user_key')}" --form-string "title=#{options[:title]}" --form-string "message=#{options[:message]}" https://api.pushover.net/1/messages.json}
+  #   puts command
+  #   system command
+  # end
+
   # notify(
   #   title: "Instapaper article expired",
   #   message: bookmark.title,
@@ -49,7 +59,7 @@ class Runner
       user: self.validate_config_key('pushover_user_key'),
     ))
 
-    info("PushOver message: #{message.inspect}")
+    self.info("PushOver message: #{message.inspect}\nOptions: #{clean_options.inspect}")
 
     begin
       response = message.push
