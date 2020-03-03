@@ -1,32 +1,18 @@
 #!/usr/bin/env ruby
 
-require 'dropbox_api'
-require 'logglier'
+# ../shared/runner.rb is copied to lib/runner.rb when rake build is run.
+require_relative './lib/runner'
 
-CONFIG = instance_eval(File.read(File.expand_path('../config.rb', __FILE__)))
-LOGGER = Logglier.new(CONFIG.loggly_url, threaded: true)
-CLIENT = DropboxApi::Client.new(CONFIG.dropbox_access_token)
+require_relative './runners/dropbox'
 
-LOGGER.info("Running jakubstastny/dropbox-group-photos")
+Runner.run(__FILE__) do |runner|
+  dropbox_runner = DropboxRunner.new(runner)
 
-camera_uploads = CLIENT.list_folder('/Camera Uploads')
-camera_upload_files = camera_uploads.entries.select { |entry| entry.respond_to?(:rev) }
-# We have client_modified, server_modified and format of the file.
-# The file might be named differently than expected though.
-old_camera_upload_files = camera_upload_files.select { |file| file.server_modified < (Time.now - (60 * 60 * 24 * CONFIG.days_to_keep)) }
+  photos = dropbox_runner.list_photos
+  old_photos = dropbox_runner.filter_old_photos(photos)
 
-LOGGER.info("There are #{old_camera_upload_files.length} files older of #{CONFIG.days_to_keep} days of #{camera_upload_files.length} camera uploads")
+  runner.info("There are #{old_photos.length} files older of #{runner.config.days_to_keep} days of #{photos.length} camera uploads")
 
-folders_to_be_created = old_camera_upload_files.map { |file| file.server_modified.strftime('%Y-%m') }.uniq
-folders_to_be_created.each do |folder|
-  folder_path = "/#{File.join(CONFIG.parent_folder, folder)}"
-  LOGGER.info("~ Creating folder #{folder_path}")
-  CLIENT.create_folder(folder_path)
-rescue DropboxApi::Errors::FolderConflictError
-end
-
-old_camera_upload_files.each do |file|
-  destination_file = "/#{File.join(CONFIG.parent_folder, file.server_modified.strftime('%Y-%m'))}/#{file.name}"
-  LOGGER.info("~ Moving #{file.path_display} to #{destination_file}")
-  CLIENT.move(file.path_display, destination_file)
+  dropbox_runner.create_folders(old_photos)
+  dropbox_runner.archive_old_photos(old_photos)
 end
