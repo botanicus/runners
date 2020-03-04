@@ -11,7 +11,7 @@ Runner.run(__FILE__) do |runner|
   photos = dropbox_runner.list_photos
   old_photos = dropbox_runner.filter_old_photos(photos)
 
-  runner.info("There are #{old_photos.length} files older of #{runner.config.days_to_keep} days of #{photos.length} camera uploads")
+  runner.info("There are #{old_photos.length} files older than #{runner.config.days_to_keep} days of #{photos.length} camera uploads")
 
   dropbox_runner.create_folders(old_photos)
   dropbox_runner.archive_old_photos(old_photos)
