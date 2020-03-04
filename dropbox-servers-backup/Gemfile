@@ -1,8 +1,7 @@
 source 'https://rubygems.org'
 
-group(:development) do
-  gem 'pry'
-end
+gem 'pry'
+gem 'pushover'
 
 gem 'logglier'
 gem 'dropbox_api'

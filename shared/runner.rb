@@ -34,6 +34,15 @@ class Runner
     self.logger.warn(message)
   end
 
+  def run(command)
+    puts "$ #{command}"
+    result = %x{#{command}}
+    puts result unless result.empty?
+    if $?.exitstatus != 0
+      abort "\nExited with #{$?.exitstatus}"
+    end
+  end
+
   # # Until https://github.com/erniebrodeur/pushover/issues/34 is fixed
   # def notify(**options)
   #   command = %Q{curl -s --form-string "token=#{self.validate_config_key('pushover_app_token')}" --form-string "user=#{self.validate_config_key('pushover_user_key')}" --form-string "title=#{options[:title]}" --form-string "message=#{options[:message]}" https://api.pushover.net/1/messages.json}
