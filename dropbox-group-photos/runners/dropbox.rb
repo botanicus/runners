@@ -7,8 +7,7 @@ class DropboxRunner
   end
 
   def list_photos
-    camera_uploads = @client.list_folder('/Camera Uploads')
-    camera_uploads.entries.select { |entry| entry.respond_to?(:rev) }
+    self.retrieve_photos(@client.list_folder('/Camera Uploads'))
   end
 
   # We have client_modified, server_modified and format of the file.
@@ -23,7 +22,7 @@ class DropboxRunner
     folders_to_be_created = old_photos.map { |file| file.server_modified.strftime('%Y-%m') }.uniq
     folders_to_be_created.each do |folder|
       folder_path = "/#{File.join(@runner.config.parent_folder, folder)}"
-      @runner.info("~ Creating folder #{folder_path}")
+      @runner.info("Creating folder #{folder_path}")
       @client.create_folder(folder_path)
     rescue DropboxApi::Errors::FolderConflictError
     end
@@ -32,8 +31,18 @@ class DropboxRunner
   def archive_old_photos(old_photos)
     old_photos.each do |file|
       destination_file = "/#{File.join(@runner.config.parent_folder, file.server_modified.strftime('%Y-%m'))}/#{file.name}"
-      @runner.info("~ Moving #{file.path_display} to #{destination_file}")
+      @runner.info("Moving #{file.path_display} to #{destination_file}")
       @client.move(file.path_display, destination_file)
     end
+  end
+
+  protected
+  def retrieve_photos(response)
+    if response.has_more?
+      response = @client.list_folder_continue(response.cursor)
+      self.retrieve_photos(response)
+    end
+
+    response.entries.select { |entry| entry.respond_to?(:rev) }
   end
 end
