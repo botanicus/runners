@@ -3,7 +3,7 @@ require 'dropbox_api'
 
 class DropboxRunner
   def initialize(runner)
-    @runner, @dropbox = runner, DropboxApi::Client.new(runner.config.dropbox_access_token)
+    @runner, @client = runner, DropboxApi::Client.new(runner.config.dropbox_access_token)
   end
 
   def list_photos
