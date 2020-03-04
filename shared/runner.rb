@@ -68,15 +68,15 @@ class Runner
       user: self.validate_config_key('pushover_user_key'),
     ))
 
-    self.info("PushOver message: #{message.inspect}\nOptions: #{clean_options.inspect}")
+    self.info("PushOver message: #{clean_options.inspect}")
 
     begin
       response = message.push
 
-      info("PushOver message delivery status: #{response.status == 1}")
+      self.info("PushOver message delivery status: #{response.status == 1}")
       response.status == 1
     rescue => e
-      p [:error, e]
+      self.warn("Frozen excon error, delivery should succeed nevertheless though.")
     end
   end
 

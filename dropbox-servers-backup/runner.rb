@@ -8,5 +8,7 @@ require_relative './runners/dropbox'
 Runner.run(__FILE__) do |runner|
   dropbox_runner = DropboxRunner.new(runner)
 
-  dropbox_runner.run
+  dropbox_runner.in_backups do
+    dropbox_runner.run
+  end
 end

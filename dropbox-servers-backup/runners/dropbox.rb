@@ -6,31 +6,33 @@ class DropboxRunner
     @runner, @client = runner, DropboxApi::Client.new(runner.config.dropbox_access_token)
   end
 
-  def run
+  def in_backups(&block)
     # volume /backups
     # rsync dev, rsync sys
-    Dir.chdir('/backups')
+    Dir.chdir('/backups', &block)
+  end
 
-    # Generate SSH keys and put them to ~/.ssh/authorized_keys.
+  def run
+    # Generate SSH keys and put them to ~/.ssh/authorized_keys on dev.
     # Then:
     # Host dev
     #   HostName 134.209.47.239
     #   User root
-    run "test -d dev || mkdir dev"
+    @runner.run("test -d dev || mkdir dev")
     Dir.chdir('dev') do
-      run "rsync root@dev:/root/projects dev --recursive --delete"
+      @runner.run("rsync root@dev:/root/projects dev --recursive --delete")
     end
 
-    run "test -d sys || mkdir sys"
+    @runner.run "test -d sys || mkdir sys"
     Dir.chdir('sys') do
-      run "cp -f /self/var/spool/cron/crontabs/root crontab"
+      @runner.run("cp -f /self/var/spool/cron/crontabs/root crontab")
     end
 
     backup_name = "#{Time.now.strftime('%Y-%m-%d')}.tbz"
-    run "tar cvjpf #{backup_name} *"
+    @runner.run("tar cvjpf #{backup_name} *")
 
     @client.upload(File.join(@runner.config.backup_folder, backup_name), File.read(backup_name))
 
-    run "rm #{backup_name}"
+    @runner.run("rm #{backup_name}")
   end
 end
