@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'pry'
-gem 'pushover'
+gem 'pushover', github: 'erniebrodeur/pushover'
 
 gem 'logglier'
 gem 'dropbox_api'
