@@ -6,11 +6,8 @@ Pushes blog posts from Dropbox to GitHub.
 
 # Usage
 
+```sh
 ```
-docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) jakubstastny/dropbox-wip-cleaner
-```
-
-Replace `VAR_x`/`VAL_x` with variables from the configuration section.
 
 # Configuration
 

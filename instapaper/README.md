@@ -6,11 +6,32 @@ Archive old Instapaper articles.
 
 # Usage
 
-```
-docker run --rm -e VAR_1=VAL_1 -e VAR_2=VAL_2 (...) jakubstastny/instapaper-article-expirer
-```
+```sh
+#!/bin/bash
 
-Replace `VAR_x`/`VAL_x` with variables from the configuration section.
+IMAGE=jakubstastny/instapaper
+
+# We use an array, because on a multiline command it's impossible to use comments.
+# This requires bash to be used rather than just plain sh.
+docker_run_args=(
+  --rm
+
+  # Standard keys.
+  -e LOGGLY_URL=https://logs-01.loggly.com/inputs/04192b39-fed2-471e-a1bd-2455943d8129/tag/ruby/
+  -e PUSHOVER_USER_KEY=uae6tz3vefrmeno7omp7xh1gj3jvs5
+  -e PUSHOVER_APP_TOKEN=aduptj95g5vc4sr89fwsiyopim2vv4
+  # Extra keys.
+  -e INSTAPAPER_OAUTH_CONSUMER_ID=cc5974fec29f42ddb593040b31e3a0d2
+  -e INSTAPAPER_OAUTH_CONSUMER_SECRET=e89181adea82483494bff7888d43550b
+  -e INSTAPAPER_USERNAME=jakub.stastny.pt+service@gmail.com
+  -e INSTAPAPER_PASSWORD=iXbfjaUjNvMeu2ZBTBkAyfsQ
+  -e MAX_BOOKMARKS_AT_ONCE=3
+)
+
+# Extends args with whatever is passed into $@ of this script, such as -it.
+docker_run_args=("${docker_run_args[@]}" "$@")
+docker pull $IMAGE && docker run "${docker_run_args[@]}" $IMAGE
+```
 
 # Configuration
 
