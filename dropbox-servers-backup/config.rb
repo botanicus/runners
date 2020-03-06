@@ -1,5 +1,4 @@
 require 'ostruct'
-require 'json'
 
 OpenStruct.new(
   # Standard keys.
@@ -16,5 +15,5 @@ OpenStruct.new(
 
   # Servers.
   # Generate SSH keys and put them to ~/.ssh/authorized_keys on the server that's being backed up.
-  servers: JSON.parse(ENV.fetch('SERVERS'))
+  servers: ENV.fetch('SERVERS')
 )
