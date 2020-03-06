@@ -1,5 +1,7 @@
 require 'pry'
 require 'yaml'
+require 'pushover'
+require 'logglier'
 
 class Runner
   def self.run(runner_file, &block)
@@ -18,10 +20,7 @@ class Runner
   end
 
   def logger
-    @logger ||= begin
-      require 'logglier'
-      Logglier.new(self.validate_config_key('loggly_url'))
-    end
+    @logger ||= Logglier.new(self.validate_config_key('loggly_url'))
   end
 
   def info(message)
@@ -55,9 +54,7 @@ class Runner
   #   message: bookmark.title,
   #   url: bookmark.url
   # )
-  def notify(**options)
-    require 'pushover'
-
+  def notify(quiet: false, **options)
     clean_options = options.reduce(Hash.new) do |buffer, (key, value)|
       buffer.merge!(key => value) if value
       buffer
@@ -68,7 +65,7 @@ class Runner
       user: self.validate_config_key('pushover_user_key'),
     ))
 
-    self.info("PushOver message: #{clean_options.inspect}")
+    self.info("PushOver message: #{clean_options.inspect}") unless quiet
 
     begin
       response = message.push
@@ -83,7 +80,8 @@ class Runner
   def notify_about_error(title, error)
     self.notify(
       title: title,
-      message: {error: "#{error.class}: #{error.message}", trace: error.backtrace}.to_yaml
+      message: {error: "#{error.class}: #{error.message}", trace: error.backtrace}.to_yaml,
+      quiet: true
     )
   end
 

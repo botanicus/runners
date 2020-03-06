@@ -1,4 +1,5 @@
 require 'ostruct'
+require 'json'
 
 OpenStruct.new(
   # Standard keys.
@@ -11,5 +12,9 @@ OpenStruct.new(
 
   # Extra keys.
   dropbox_access_token: ENV.fetch('DROPBOX_ACCESS_TOKEN'),
-  backup_folder: ENV.fetch('DROP_FOLDER') { '/Archivo/Servers' }
+  backup_folder: ENV.fetch('DROP_FOLDER') { '/Archivo/Servers' },
+
+  # Servers.
+  # Generate SSH keys and put them to ~/.ssh/authorized_keys on the server that's being backed up.
+  servers: JSON.parse(ENV.fetch('SERVERS'))
 )

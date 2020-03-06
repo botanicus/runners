@@ -13,23 +13,21 @@ class DropboxRunner
   end
 
   def run
-    # Generate SSH keys and put them to ~/.ssh/authorized_keys on dev.
-    # Then:
-    # Host dev
-    #   HostName 134.209.47.239
-    #   User root
-    @runner.run("test -d dev || mkdir dev")
-    Dir.chdir('dev') do
-      @runner.run("rsync root@dev:/root/projects dev --recursive --delete")
+    @runner.config.servers.each do |(name, ip)|
+      @runner.run("test -d #{name} || mkdir #{name}")
+      @runner.run("rsync root@#{ip}:/root/projects #{name} --recursive --delete") # FIXME: backup locations should be configurable.
     end
 
-    @runner.run "test -d sys || mkdir sys"
+    @runner.run("test -d sys || mkdir sys")
+    # TODO: also make configurable.
     Dir.chdir('sys') do
       @runner.run("cp -f /self/var/spool/cron/crontabs/root crontab")
+      @runner.run("rm -rf cron")
+      @runner.run("cp -R /self/root/cron cron")
     end
 
     backup_name = "#{Time.now.strftime('%Y-%m-%d')}.tbz"
-    @runner.run("tar cvjpf #{backup_name} *")
+    @runner.run("tar cvjpf #{backup_name} #{@runner.config.servers.keys.join(' ')} sys")
 
     @client.upload(File.join(@runner.config.backup_folder, backup_name), File.read(backup_name))
 
