@@ -1,3 +1,12 @@
+GIT
+  remote: https://github.com/erniebrodeur/pushover.git
+  revision: cd29a0063c6531b8624424431ab5df69f3a01677
+  specs:
+    pushover (3.0.3)
+      excon
+      gli
+      oj
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -37,15 +46,11 @@ GEM
       multi_json (~> 1)
     method_source (0.9.2)
     multi_json (1.14.1)
-    oj (3.10.3)
+    oj (3.10.5)
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
     public_suffix (4.0.3)
-    pushover (3.0.2)
-      excon
-      gli
-      oj
     simple_oauth (0.3.1)
     thread_safe (0.3.6)
     unf (0.1.4)
@@ -64,7 +69,7 @@ DEPENDENCIES
   instapaper
   logglier
   pry
-  pushover
+  pushover!
 
 BUNDLED WITH
    2.0.2
